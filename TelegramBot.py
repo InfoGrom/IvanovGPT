@@ -57,8 +57,13 @@ class TelegramBot:
 
         if(num_tokens > userdata["tokens"]):
             return False
-        
-        self.database.query(f"UPDATE settings SET tokens={int(userdata['tokens']) - num_tokens} WHERE userid='{userid}'", commit=True)
+
+        balance = userdata["balance"]
+        new_balance = balance - num_tokens/10
+        if(new_balance < 0):
+            return False
+
+        self.database.query(f"UPDATE settings SET tokens={int(userdata['tokens']) - num_tokens}, balance={new_balance} WHERE userid='{userid}'", commit=True)
         return True
     
     # При нажатии на старт или отправки команды /start
@@ -117,7 +122,7 @@ class TelegramBot:
         lang = settings_user["lang"]
         tokens = settings_user["tokens"]
         ratings = settings_user ["ratings"]
-        text = f"\n\n<b>Ваш ID:</b> {user_id}\n<b>Ваше имя:</b> <code>{message.from_user.username}</code>\n\n<b>Ваш рейтинг:</b> <code>{ratings}</code>\n\n<b>ChatGPT:</b>\n<b>Осталось:</b> <code>{tokens}</code> токенов\n<b>Баланс:</b> <code>{balance}</code> рублей"
+        text = f"\n\n<b>🆔 Ваш ID:</b> {user_id}\n<b>👤 Ваше имя:</b> <code>{message.from_user.username}</code>\n\n<b>🔰 Ваш рейтинг:</b> <code>{ratings}</code>\n\n<b>ChatGPT:</b>\n<b>🔸 Осталось:</b> <code>{tokens}</code> токенов\n<b>💰 Баланс:</b> <code>{balance}</code> рублей"
         await self.bot.send_message(chat_id=message.chat.id,
                                     text=text,
                                     reply_to_message_id=message.message_id,
@@ -209,8 +214,8 @@ class TelegramBot:
                                                 message_id=message_id+1)
                 print(f"(@{username} -> bot): {rq}\n(bot -> @{username}): {generated_text['message']}")
             else:
-                await self.bot.send_message(chat_id=message.chat.id, text="⛔️ Упс...У вас не достаточно токенов в личном кабинете. Пожалуйста пополните баланс /pay!", reply_to_message_id=message_id)
-                print(f"(@{username} -> bot): {rq}\n(bot -> @{username}): ⛔️ Упс...У вас не достаточно токенов в личном кабинете. Пожалуйста пополните баланс /pay!")
+                await self.bot.send_message(chat_id=message.chat.id, text="⛔️ {username}...У вас не достаточно токенов в личном кабинете. Пожалуйста пополните баланс с помощью команды /pay, чтобы увеличить лимит токенов!", reply_to_message_id=message_id)
+                print(f"(@{username} -> bot): {rq}\n(bot -> @{username}): ⛔️ {username}...У вас не достаточно токенов в личном кабинете. Пожалуйста пополните баланс с помощью команды /pay, чтобы увеличить лимит токенов!")
 
 
     def is_user_admin(self, user_id):
@@ -256,14 +261,14 @@ class TelegramBot:
     def admin_buttons(self):
         buttons = types.InlineKeyboardMarkup(row_width=2)
         buttons.add(
-            types.InlineKeyboardButton(text="Выдать деньги", callback_data='admin_give_money'),
-            types.InlineKeyboardButton(text="Выдать токены", callback_data='admin_add_tokens')
+            types.InlineKeyboardButton(text="💰 Выдать деньги", callback_data='admin_give_money'),
+            types.InlineKeyboardButton(text="🔸 Выдать токены", callback_data='admin_add_tokens')
             )
         buttons.row(
-            types.InlineKeyboardButton(text="Рассылка", callback_data='admin_spam')
+            types.InlineKeyboardButton(text="📩 Рассылка", callback_data='admin_spam')
             )
         buttons.row(
-            types.InlineKeyboardButton(text="Забанить", callback_data='admin_ban')
+            types.InlineKeyboardButton(text="❌ Забанить", callback_data='admin_ban')
             )
         return buttons
 

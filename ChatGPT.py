@@ -44,9 +44,6 @@ class ChatGPT:
                     engine=engine_model,
                     prompt=message,
                     max_tokens=max_tokens,
-                    top_p=1,
-                    frequency_penalty=0,
-                    presence_penalty=0,
                     temperature=temperature
                 )
                 # Формируем результат ответа
