@@ -1,0 +1,7 @@
+BOT_API_TOKEN = ''
+
+CHAT_GPT_LIST = ['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']
+
+DATABASE = 'database.db'
+
+NAME_BOT_COMMAND = 'Двойняшка'
