@@ -26,7 +26,7 @@ class ChatGPT:
     # max_tokens - максимальное количество токенов (по умолчанию: 1000)
     # temperature - степень человечности ответа от 0 до 1 (по умолчанию: 0.7)
     # engine_model - модель ChatGPT
-    def getAnswer(self, message, lang="ru", max_tokens=1000, temperature=0.8, engine_model="text-davinci-003"):
+    def getAnswer(self, message, lang="ru", max_tokens=1000, temperature=0.8, top_p=1.0, frequency_penalty=0.5, presence_penalty=0.5, engine_model="text-davinci-003"):
         i = 0
         errors = False
         message = mtranslate.translate(message, "en", "auto")
@@ -39,12 +39,16 @@ class ChatGPT:
                     errors = True
                     return {"message": mtranslate.translate("❌ You have exceeded the limit on the number of tokens. Please shorten your message.", lang, "auto"), "list_keys":self.api_keys_list, "attempts":i, "errors":errors, "num_tokens":num_tokens}
 
+
                 # Отправляем текст на серверы OpenAI и получаем ответ
                 response = openai.Completion.create(
                     engine=engine_model,
                     prompt=message,
                     max_tokens=max_tokens,
-                    temperature=temperature
+                    top_p=top_p,
+                    temperature=temperature,
+                    frequency_penalty=frequency_penalty,
+                    presence_penalty=presence_penalty
                 )
                 # Формируем результат ответа
                 result = response["choices"][0]["text"].strip()
