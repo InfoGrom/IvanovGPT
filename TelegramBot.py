@@ -104,9 +104,20 @@ class TelegramBot:
         ratings = settings_user ["ratings"]
         text = f"\n\n\n<b>Мой аккаунт</b>:\n\n<code>Вся необходимая информация о вашем профиле:</code>\n\n<b>🆔 ID:</b> {user_id}\n<b>👤 Имя:</b> <code>{message.from_user.username}</code>\n\n<b>🔰 Мой рейтинг в чатах:</b> <code>+{ratings}</code>\n\n<b>🪪 Мой профиль:</b>\n<b>├ Партнёрский счёт:</b> <code>Отсутствует</code><b>\n├ Осталось:</b> <code>{tokens}</code> токенов\n<b>└ Мой баланс:</b> <code>{balance}</code> рублей"
 
-        await self.bot.send_message(chat_id=user_id,
-                                    text=text,
-                                    parse_mode='HTML')
+        # Создаем объекты кнопок оплаты
+        payment_button = types.InlineKeyboardButton(text="🤝 Партнерская программа", url="https://t.me/InfoGrom_Forum/117")
+
+        # Создаем объект клавиатуры с кнопками оплаты
+        payment_keyboard = types.InlineKeyboardMarkup(row_width=1)
+        payment_keyboard.add(payment_button)
+
+        # Отправляем сообщение с кнопками оплаты
+        await self.bot.send_message(
+            chat_id=user_id,
+            text=text,
+            parse_mode='HTML',
+            reply_markup=payment_keyboard
+        ) 
 
     # Функция ответа на команду /help
     async def help_command_handler(self, message: types.Message):
