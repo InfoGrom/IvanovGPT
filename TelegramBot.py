@@ -83,16 +83,12 @@ class TelegramBot:
         if(not self.CheckUser(userid)):
             self.RegisterUser(username, userid, firstname, lastname)
 
-        # Создаем клавиатуру с кнопками
-        keyboard = types.InlineKeyboardMarkup()
-        my_account_button = types.InlineKeyboardButton(text="👤 Мой аккаунт", callback_data="/info")
-        help_button = types.InlineKeyboardButton(text="🆘 Помощь", url="https://t.me/InfoGrom_Forum/108")
-        keyboard.add(my_account_button, help_button)
+        # Отправляем сообщение
+        await self.bot.send_message(userid, lang['RU_COMMAND_START'].format(bot_name=self.name_bot_command,
+                                    reply_to_message_id=message.message_id,
+                                    parse_mode='HTML'))
 
-        # Отправляем сообщение с клавиатурой
-        await message.reply(lang['RU_COMMAND_START'].format(bot_name=self.name_bot_command), reply_markup=keyboard)
-
-    # Функция ответа на команду /info
+    # Функция вызова личного кабинета пользователя /info
     async def info_command_handler(self, message: types.Message):
         user_id = message.from_user.id
         settings_user = self.GetUserSettings(user_id)
@@ -106,18 +102,11 @@ class TelegramBot:
         lang = settings_user["lang"]
         tokens = settings_user["tokens"]
         ratings = settings_user ["ratings"]
-        text = f"\n\n\n<b>Мой аккаунт</b>:\n<code>Вся необходимая информация о вашем профиле:</code>\n\n<b>🆔 ID:</b> {user_id}\n<b>👤 Имя:</b> <code>{message.from_user.username}</code>\n\n<b>🔰 Мой рейтинг в чатах:</b> <code>+{ratings}</code>\n\n<b>🪪 Мой профиль:</b>\n<b>├ Партнёрский счёт:</b> <code>Отсутствует</code><b>\n├ Осталось:</b> <code>{tokens}</code> токенов\n<b>└ Мой баланс:</b> <code>{balance}</code> рублей"
-
-        # Создаем клавиатуру с кнопками
-        keyboard = types.InlineKeyboardMarkup()
-        my_account_button = types.InlineKeyboardButton(text="💳 Пополнить баланс", callback_data="/add_balance")
-        help_button = types.InlineKeyboardButton(text="🔄 Обновить", callback_data="/info")
-        keyboard.add(my_account_button, help_button)
+        text = f"\n\n\n<b>Мой аккаунт</b>:\n\n<code>Вся необходимая информация о вашем профиле:</code>\n\n<b>🆔 ID:</b> {user_id}\n<b>👤 Имя:</b> <code>{message.from_user.username}</code>\n\n<b>🔰 Мой рейтинг в чатах:</b> <code>+{ratings}</code>\n\n<b>🪪 Мой профиль:</b>\n<b>├ Партнёрский счёт:</b> <code>Отсутствует</code><b>\n├ Осталось:</b> <code>{tokens}</code> токенов\n<b>└ Мой баланс:</b> <code>{balance}</code> рублей"
 
         await self.bot.send_message(chat_id=user_id,
                                     text=text,
-                                    reply_to_message_id=message.message_id,
-                                    parse_mode='HTML', reply_markup=keyboard)
+                                    parse_mode='HTML')
 
     # Функция ответа на команду /help
     async def help_command_handler(self, message: types.Message):
@@ -128,31 +117,42 @@ class TelegramBot:
             settings_user = settings_user["result"]
         else:
             return
-        text = f"🖥 <b>Инструкция по работе с ботом</b>:\n\n<code>IvanovGPTbot</code> - это искусственный интеллект, синхронизированный с проектом «ChatGPT».\n\n<b>Что я умею?</b>\n\nВыполнять множество разных операций, такие как:\n\n - Отвечать на вопросы и давать более детальные и проработанные ответы, чем обычные виртуальные помощники как Alisa, Siri и другие.\n\n- Я не просто копирую подходящий кусок текста, а структурирую ответ согласно вашему запросу.\n\n- Мне можно задать уточняющие вопросы или попросить раскрыть тему подробнее.\n\n- Создавать текстовый контент для социальных сетей.\n\n- Писать научные статьи или стихи, посты для социальных сетей, сценарии к видео, тексты для почтовых рассылок, рассказы на заданную тему и многое другое — для меня не проблема.\n\n- Делать выжимки из длинных текстов. Если «скормить» мне текст и попросить сделать выжимку (на английском — summarise), то я выдам краткую версию. При этом сохраняется ключевая информация, чтобы смысл текста не потерялся.\n\n- Анализировать текст. Я могу проанализировать текст (например, можно задать команду: Иванов, perform sentiment analysis) и рассказать о его содержании. При этом я указываю, в каком ключе написан текст, и пересказываю ключевые мысли.\n\n- Перефразировать текст. Меня можно попросить переписать (на английском — paraphrase) текст другими словами. Сырой результат вряд ли пройдет проверку на антиплагиат, но как основу для дальнейшей доработки его вполне можно использовать.\n\n- Переводить текст. Меня вполне можно использовать вместо онлайн-переводчика, но принципиального скачка в качестве ожидать не стоит.\n\n- Писать код. Я могу разрабатывать несложные приложения, анализировать чужой код, давать подсказки и переводить с одного языка программирования в другой.\n\n- Помните, что Иванов — это всего лишь инструмент, и решать, как именно меня использовать, предстоит Вам.\n\nНапример, можно попросить меня сгенерировать детальное описание для запроса в Midjourney или другой нейросети для генераций изображений по тексту.\n\nВажно!\nПри отправке запроса, происходит вычет токенов, 1 токен равен ~ 1 символу на русском языке или 4 символам на английском.\n\nНу что <code>{message.from_user.username}</code>? Начнем? Нажми команду /start"
-        await self.bot.send_message(chat_id=message.chat.id,
+        text = f"🖥 <b>Вам нужна помощь?</b>\n\nПожалуйста, обратите внимание, что в поддержке классифицированные специалисты. Мы постараемся помочь как можно быстрее, но ожидание может занять некоторое время.\n\n<b>График работы администраторов: 09:00-18:00 по московскому времени.</b>\n\nЧтобы связаться с тех. поддержкой для решения каких либо вопросов, отправтье боту сообщение «Помощь»."
+        await self.bot.send_message(chat_id=user_id,
                                     text=text,
-                                    reply_to_message_id=message.message_id,
                                     parse_mode='HTML')
-
+        
     # Функция ответа на команду /pay
     async def pay_command_handler(self, message: types.Message):
-        inline_kb = types.InlineKeyboardMarkup()
-        inline_btn_500 = types.InlineKeyboardButton(text='💳 Пробные 500 токенов за 59 руб.', url='https://oplata.qiwi.com/form?invoiceUid=bbca21dd-ae7b-4acf-ad33-14b127906808&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot')
-        inline_kb.add(inline_btn_500)
+        user_id = message.from_user.id
+        settings_user = self.GetUserSettings(user_id)
 
-        inline_btn_1000 = types.InlineKeyboardButton(text='💳 Оплатить 1000 токенов за 99 руб.', url='https://oplata.qiwi.com/form?invoiceUid=9087c35a-17a1-482f-91d7-294d59effe0c&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot')
-        inline_kb.add(inline_btn_1000)
+        if (settings_user["error"]):
+            settings_user = settings_user["result"]
+        else:
+            return
 
-        inline_btn_2000 = types.InlineKeyboardButton(text='💳 Оплатить 2000 токенов за 199 руб.', url='https://oplata.qiwi.com/form?invoiceUid=fa13e3ff-dbab-4b3b-8d24-7ed6ebe7847e&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot')
-        inline_kb.add(inline_btn_2000)
+        text = f"<b>💰 Тарифы и стоимость «ChatGPT».</b>\n\n1 токен ~ 1 символ на русском языке или 4 символа на английском. Выберите тариф и после оплаты, перейдите по кнопке 'Перейти в тех. поддержку', напишите ваше имя и сумму, чтобы администратор обновил Ваш личный кабинет:"
 
-        inline_btn_5000 = types.InlineKeyboardButton(text='💳 Оплатить 5000 токенов за 499 руб.', url='https://oplata.qiwi.com/form?invoiceUid=e592f04a-a2ef-4a27-be59-9594d1159ac9&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot')
-        inline_kb.add(inline_btn_5000)
+        # Создаем объекты кнопок оплаты
+        payment_button_1 = types.InlineKeyboardButton(text="500 токенов за 59 руб.", url="https://oplata.qiwi.com/form?invoiceUid=bbca21dd-ae7b-4acf-ad33-14b127906808&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
+        payment_button_2 = types.InlineKeyboardButton(text="1000 токенов за 99 руб.", url="https://oplata.qiwi.com/form?invoiceUid=9087c35a-17a1-482f-91d7-294d59effe0c&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
+        payment_button_3 = types.InlineKeyboardButton(text="2000 токенов за 199 руб.", url="https://oplata.qiwi.com/form?invoiceUid=fa13e3ff-dbab-4b3b-8d24-7ed6ebe7847e&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
+        payment_button_4 = types.InlineKeyboardButton(text="5000 токенов за 499 руб.", url="https://oplata.qiwi.com/form?invoiceUid=e592f04a-a2ef-4a27-be59-9594d1159ac9&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
+        support_button = types.InlineKeyboardButton(text="🆘 Перейти в тех. поддержку", url="https://t.me/InfoGrom_Forum/108")
 
-        inline_btn_admin = types.InlineKeyboardButton(text='⚠️ Перейти в тех. поддержку', url='https://t.me/InfoGrom_Forum/108')
-        inline_kb.add(inline_btn_admin)
+        # Создаем объект клавиатуры с кнопками оплаты
+        payment_keyboard = types.InlineKeyboardMarkup(row_width=2)
+        payment_keyboard.add(payment_button_1, payment_button_2, payment_button_3, payment_button_4)
+        payment_keyboard.add(support_button)
 
-        await message.answer("💰 Тарифы и стоимость. 1 токен ~ 1 символ на русском языке или 4 символа на английском. После оплаты, перейдите по кнопке 'Перейти в тех. поддержку', напишите ваше имя и сумму, чтобы администратор обновил ваш личный кабинет:", reply_markup=inline_kb)
+        # Отправляем сообщение с кнопками оплаты
+        await self.bot.send_message(
+            chat_id=user_id,
+            text=text,
+            parse_mode='HTML',
+            reply_markup=payment_keyboard
+        ) 
 
     def GetUserSettings(self, userid):
         userdata = self.database.query(f"SELECT * FROM settings WHERE userid={userid}")
@@ -300,9 +300,7 @@ class TelegramBot:
             types.InlineKeyboardButton(text="📩 Рассылка", callback_data='admin_spam')
             )
         buttons.row(
-            types.InlineKeyboardButton(text="❌ Забанить", callback_data='admin_ban')
-            )
-        buttons.row(
+            types.InlineKeyboardButton(text="❌ Забанить", callback_data='admin_ban'),
             types.InlineKeyboardButton(text="✅ Разбанить", callback_data='admin_unban')
             )
         return buttons
