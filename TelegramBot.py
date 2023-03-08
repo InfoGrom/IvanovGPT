@@ -82,7 +82,15 @@ class TelegramBot:
         # Если пользователя нету в БД, то  регистрируем его
         if(not self.CheckUser(userid)):
             self.RegisterUser(username, userid, firstname, lastname)
-        await message.reply(lang['RU_COMMAND_START'].format(bot_name=self.name_bot_command))
+
+        # Создаем клавиатуру с кнопками
+        keyboard = types.InlineKeyboardMarkup()
+        my_account_button = types.InlineKeyboardButton(text="👤 Мой аккаунт", callback_data="/info")
+        help_button = types.InlineKeyboardButton(text="🆘 Помощь", url="https://t.me/InfoGrom_Forum/108")
+        keyboard.add(my_account_button, help_button)
+
+        # Отправляем сообщение с клавиатурой
+        await message.reply(lang['RU_COMMAND_START'].format(bot_name=self.name_bot_command), reply_markup=keyboard)
 
     # Функция ответа на команду /info
     async def info_command_handler(self, message: types.Message):
@@ -98,7 +106,7 @@ class TelegramBot:
         lang = settings_user["lang"]
         tokens = settings_user["tokens"]
         ratings = settings_user ["ratings"]
-        text = f"\n\n\n<b>Мой аккаунт</b>:\n<code>Вся необходимая информация о вашем профиле:</code>\n\n<b>🆔 ID:</b> {user_id}\n<b>👤 Имя:</b> <code>{message.from_user.username}</code>\n\n<b>🔰 Рейтинг:</b> <code>+{ratings}</code>\n\n<b>🪪 Профиль:</b>\n<b>├ Партнёрский счёт:</b> <code>Отсутствует</code><b>\n├ Осталось:</b> <code>{tokens}</code> токенов\n<b>└ Мой баланс:</b> <code>{balance}</code> рублей"
+        text = f"\n\n\n<b>Мой аккаунт</b>:\n<code>Вся необходимая информация о вашем профиле:</code>\n\n<b>🆔 ID:</b> {user_id}\n<b>👤 Имя:</b> <code>{message.from_user.username}</code>\n\n<b>🔰 Мой рейтинг в чатах:</b> <code>+{ratings}</code>\n\n<b>🪪 Мой профиль:</b>\n<b>├ Партнёрский счёт:</b> <code>Отсутствует</code><b>\n├ Осталось:</b> <code>{tokens}</code> токенов\n<b>└ Мой баланс:</b> <code>{balance}</code> рублей"
 
         await self.bot.send_message(chat_id=user_id,
                                     text=text,
@@ -176,7 +184,7 @@ class TelegramBot:
         # Ответное сообщение пользователю на помощь:
         if message.text == 'Помощь':
             keyboard_markup = types.InlineKeyboardMarkup(row_width=2)
-            url_button = types.InlineKeyboardButton(text='ДА', url='https://t.me/InfoGrom_Chat/108')
+            url_button = types.InlineKeyboardButton(text='ДА', url='https://t.me/InfoGrom_Forum/108')
             delete_button = types.InlineKeyboardButton(text='НЕТ', callback_data='delete')
             keyboard_markup.add(url_button, delete_button)
             await self.bot.send_message(
