@@ -35,7 +35,7 @@ class TelegramBot:
         executor.start_polling(self.dp)
 
     # Функция регистрации пользователя в бд
-    def RegisterUser(self, username, userid, firstname, lastname, banned=0, is_spam=1, balance=0, lang='ru', tokens=100):
+    def RegisterUser(self, username, userid, firstname, lastname, banned=0, is_spam=1, balance=10, lang='ru', tokens=100):
         try:
             userdata = self.database.query(f"SELECT * FROM users WHERE userid='{userid}'")
             if len(userdata) <= 0:
@@ -108,10 +108,16 @@ class TelegramBot:
         ratings = settings_user ["ratings"]
         text = f"\n\n\n<b>Мой аккаунт</b>:\n<code>Вся необходимая информация о вашем профиле:</code>\n\n<b>🆔 ID:</b> {user_id}\n<b>👤 Имя:</b> <code>{message.from_user.username}</code>\n\n<b>🔰 Мой рейтинг в чатах:</b> <code>+{ratings}</code>\n\n<b>🪪 Мой профиль:</b>\n<b>├ Партнёрский счёт:</b> <code>Отсутствует</code><b>\n├ Осталось:</b> <code>{tokens}</code> токенов\n<b>└ Мой баланс:</b> <code>{balance}</code> рублей"
 
+        # Создаем клавиатуру с кнопками
+        keyboard = types.InlineKeyboardMarkup()
+        my_account_button = types.InlineKeyboardButton(text="💳 Пополнить баланс", callback_data="/add_balance")
+        help_button = types.InlineKeyboardButton(text="🔄 Обновить", callback_data="/info")
+        keyboard.add(my_account_button, help_button)
+
         await self.bot.send_message(chat_id=user_id,
                                     text=text,
                                     reply_to_message_id=message.message_id,
-                                    parse_mode='HTML')
+                                    parse_mode='HTML', reply_markup=keyboard)
 
     # Функция ответа на команду /help
     async def help_command_handler(self, message: types.Message):
@@ -143,7 +149,7 @@ class TelegramBot:
         inline_btn_5000 = types.InlineKeyboardButton(text='💳 Оплатить 5000 токенов за 499 руб.', url='https://oplata.qiwi.com/form?invoiceUid=e592f04a-a2ef-4a27-be59-9594d1159ac9&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot')
         inline_kb.add(inline_btn_5000)
 
-        inline_btn_admin = types.InlineKeyboardButton(text='⚠️ Перейти в тех. поддержку', url='https://t.me/InfoGrom_Chat/108')
+        inline_btn_admin = types.InlineKeyboardButton(text='⚠️ Перейти в тех. поддержку', url='https://t.me/InfoGrom_Forum/108')
         inline_kb.add(inline_btn_admin)
 
         await message.answer("💰 Тарифы и стоимость. 1 токен ~ 1 символ на русском языке или 4 символа на английском. После оплаты, перейдите по кнопке 'Перейти в тех. поддержку', напишите ваше имя и сумму, чтобы администратор обновил ваш личный кабинет:", reply_markup=inline_kb)
