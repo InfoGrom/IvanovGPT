@@ -9,6 +9,7 @@ from aiogram import types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram import Dispatcher
+import asyncio
 from lang import *
 
 class TelegramBot:
@@ -83,10 +84,11 @@ class TelegramBot:
         if(not self.CheckUser(userid)):
             self.RegisterUser(username, userid, firstname, lastname)
 
-        # Отправляем сообщение
+        # Отправляем сообщение с кнопками оплаты
         await self.bot.send_message(userid, lang['RU_COMMAND_START'].format(bot_name=self.name_bot_command,
-                                    reply_to_message_id=message.message_id,
-                                    parse_mode='HTML'))
+                                    parse_mode='HTML'),
+                                    )
+
 
     # Функция вызова личного кабинета пользователя /info
     async def info_command_handler(self, message: types.Message):
@@ -102,21 +104,13 @@ class TelegramBot:
         lang = settings_user["lang"]
         tokens = settings_user["tokens"]
         ratings = settings_user ["ratings"]
-        text = f"\n\n\n<b>Мой аккаунт</b>:\n\n<code>Вся необходимая информация о вашем профиле:</code>\n\n<b>🆔 ID:</b> {user_id}\n<b>👤 Имя:</b> <code>{message.from_user.username}</code>\n\n<b>🔰 Мой рейтинг в чатах:</b> <code>+{ratings}</code>\n\n<b>🪪 Мой профиль:</b>\n<b>├ Партнёрский счёт:</b> <code>Отсутствует</code><b>\n├ Осталось:</b> <code>{tokens}</code> токенов\n<b>└ Мой баланс:</b> <code>{balance}</code> рублей"
-
-        # Создаем объекты кнопок оплаты
-        payment_button = types.InlineKeyboardButton(text="🤝 Партнерская программа", url="https://t.me/InfoGrom_Forum/117")
-
-        # Создаем объект клавиатуры с кнопками оплаты
-        payment_keyboard = types.InlineKeyboardMarkup(row_width=1)
-        payment_keyboard.add(payment_button)
+        text = f"\n\n\n<b>👤 Мой аккаунт</b>:\n\n<b>ID:</b> {user_id}\n<b>Имя:</b> <code>{message.from_user.username}</code>\n<b>Социальный статус:</b> <code>+{ratings}</code>\n\n<b> Мой кабинет:</b>\n<b>├ Партнёрский счёт:</b> <code>Не установлен</code><b>\n├ Осталось:</b> <code>{tokens}</code> токенов\n<b>└ Мой баланс:</b> <code>{balance}</code> рублей"
 
         # Отправляем сообщение с кнопками оплаты
         await self.bot.send_message(
             chat_id=user_id,
             text=text,
             parse_mode='HTML',
-            reply_markup=payment_keyboard
         ) 
 
     # Функция ответа на команду /help
@@ -128,7 +122,7 @@ class TelegramBot:
             settings_user = settings_user["result"]
         else:
             return
-        text = f"🖥 <b>Вам нужна помощь?</b>\n\nПожалуйста, обратите внимание, что в поддержке классифицированные специалисты. Мы постараемся помочь как можно быстрее, но ожидание может занять некоторое время.\n\n<b>График работы администраторов: 09:00-18:00 по московскому времени.</b>\n\nЧтобы связаться с тех. поддержкой для решения каких либо вопросов, отправтье боту сообщение «Помощь»."
+        text = f"🆘 <b>Вам нужна помощь?</b>\n\nПожалуйста, обратите внимание, что в поддержке классифицированные специалисты. Мы постараемся помочь как можно быстрее, но ожидание может занять некоторое время.\n\n<b>График работы администраторов: 09:00-18:00 по московскому времени.</b>\n\nЧтобы связаться с тех. поддержкой для решения каких либо вопросов, отправтье боту сообщение «Помощь»."
         await self.bot.send_message(chat_id=user_id,
                                     text=text,
                                     parse_mode='HTML')
@@ -143,7 +137,7 @@ class TelegramBot:
         else:
             return
 
-        text = f"<b>💰 Тарифы и стоимость «ChatGPT».</b>\n\n1 токен ~ 1 символ на русском языке или 4 символа на английском. Выберите тариф и после оплаты, перейдите по кнопке 'Перейти в тех. поддержку', напишите ваше имя и сумму, чтобы администратор обновил Ваш личный кабинет:"
+        text = f"<b>💳 Управление подпиской:</b>\n\nПодписка — открывает доступ к запросам, увеличивает лимит токенов. Выберите тариф и после оплаты, перейдите по кнопке 'Перейти в тех. поддержку', напишите ваше имя и сумму, чтобы Создатель обновил Ваш личный кабинет:"
 
         # Создаем объекты кнопок оплаты
         payment_button_1 = types.InlineKeyboardButton(text="500 токенов за 59 руб.", url="https://oplata.qiwi.com/form?invoiceUid=bbca21dd-ae7b-4acf-ad33-14b127906808&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
@@ -151,6 +145,8 @@ class TelegramBot:
         payment_button_3 = types.InlineKeyboardButton(text="2000 токенов за 199 руб.", url="https://oplata.qiwi.com/form?invoiceUid=fa13e3ff-dbab-4b3b-8d24-7ed6ebe7847e&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
         payment_button_4 = types.InlineKeyboardButton(text="5000 токенов за 499 руб.", url="https://oplata.qiwi.com/form?invoiceUid=e592f04a-a2ef-4a27-be59-9594d1159ac9&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
         support_button = types.InlineKeyboardButton(text="🆘 Перейти в тех. поддержку", url="https://t.me/InfoGrom_Forum/108")
+
+
 
         # Создаем объект клавиатуры с кнопками оплаты
         payment_keyboard = types.InlineKeyboardMarkup(row_width=2)
@@ -188,8 +184,8 @@ class TelegramBot:
         # Ответное сообщение пользователю на Ссылку:
         if message.text == 'Ссылка':
             keyboard_markup = types.InlineKeyboardMarkup(row_width=2)
-            url_button = types.InlineKeyboardButton(text='ДА', url='https://t.me/IvanovGPTbot')
-            delete_button = types.InlineKeyboardButton(text='НЕТ', callback_data='delete')
+            url_button = types.InlineKeyboardButton(text='✅ ДА', url='https://t.me/IvanovGPTbot')
+            delete_button = types.InlineKeyboardButton(text='❌ НЕТ', callback_data='delete')
             keyboard_markup.add(url_button, delete_button)
             await self.bot.send_message(
                 chat_id=message.chat.id,
@@ -201,8 +197,8 @@ class TelegramBot:
         # Ответное сообщение пользователю на помощь:
         if message.text == 'Помощь':
             keyboard_markup = types.InlineKeyboardMarkup(row_width=2)
-            url_button = types.InlineKeyboardButton(text='ДА', url='https://t.me/InfoGrom_Forum/108')
-            delete_button = types.InlineKeyboardButton(text='НЕТ', callback_data='delete')
+            url_button = types.InlineKeyboardButton(text='✅ ДА', url='https://t.me/InfoGrom_Forum/108')
+            delete_button = types.InlineKeyboardButton(text='❌ НЕТ', callback_data='delete')
             keyboard_markup.add(url_button, delete_button)
             await self.bot.send_message(
                 chat_id=message.chat.id,
@@ -243,22 +239,22 @@ class TelegramBot:
                 return
 
         # С запросом ключевого слова "Иванов":
-        if self.name_bot_command in rq or f'{self.name_bot_command},' in rq:
-            if(self.CheckTokens(userid, rq)):
+        if self.name_bot_command in rq:
+            if self.CheckTokens(userid, rq):
                 await self.bot.send_message(chat_id=message.chat.id,
                                             text="⏳ <b>Ожидайте...</b>",
                                             reply_to_message_id=message.message_id,
                                             parse_mode='HTML')
                 # Анимация "Печатает":
                 await self.bot.send_chat_action(chat_id=message.chat.id, action='typing')
-                generated_text = self.chatgpt.getAnswer(message=rq, lang="ru", max_tokens=1000, temperature=0.7)
+                generated_text = self.chatgpt.getAnswer(message=rq.replace(self.name_bot_command, ''), lang="ru", max_tokens=1000, temperature=0.7)
                 await self.bot.edit_message_text(chat_id=message.chat.id,
                                                 text=generated_text["message"],
                                                 message_id=message_id+1)
                 print(f"(@{username} -> bot): {rq}\n(bot -> @{username}): {generated_text['message']}")
             else:
-                await self.bot.send_message(chat_id=message.chat.id, text="⛔️ ...У вас не достаточно токенов в личном кабинете. Пожалуйста пополните баланс с помощью команды /pay, чтобы увеличить лимит токенов!", reply_to_message_id=message_id)
-                print(f"(@{username} -> bot): {rq}\n(bot -> @{username}): ⛔️ {username}...У вас не достаточно токенов в личном кабинете. Пожалуйста пополните баланс с помощью команды /pay, чтобы увеличить лимит токенов!")
+                await self.bot.send_message(chat_id=message.chat.id, text=f"⛔️ {username}, к сожалению я не могу продолжить с Вами диалог, у меня закончились токены... Пожалуйста перейдите в подписку с помощью команды /pay, чтобы увеличить лимит токенов!", reply_to_message_id=message_id)
+                print(f"(@{username} -> bot): {rq}\n(bot -> @{username}): ⛔️ {username}, к сожалению я не могу продолжить с Вами диалог, у меня закончились токены... Пожалуйста перейдите в подписку с помощью команды /pay, чтобы увеличить лимит токенов!")
 
 
     def is_user_admin(self, user_id):
