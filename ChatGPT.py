@@ -26,7 +26,7 @@ class ChatGPT:
     # max_tokens - максимальное количество токенов (по умолчанию: 1000)
     # temperature - степень человечности ответа от 0 до 1 (по умолчанию: 0.7)
     # engine_model - модель ChatGPT
-    def getAnswer(self, message, lang="auto", max_tokens=1000, temperature=0.7, top_p=1.0, frequency_penalty=0, presence_penalty=0, engine_model="text-davinci-003"):
+    def getAnswer(self, message, lang="auto", max_tokens=1000, temperature=0.7, top_p=1, frequency_penalty=0, presence_penalty=0, engine_model="text-davinci-003"):
         i = 0
         errors = False
         message = mtranslate.translate(message, "auto")
@@ -68,6 +68,7 @@ class ChatGPT:
                         return {"message": mtranslate.translate("❌ I'm sorry, but an unexpected error has occurred", lang, "auto"), "list_keys":self.api_keys_list, "attempts":i, "errors":errors, "num_tokens":num_tokens}
                 else:
                     i += 1
+
     # Функция удаления ключа из списка
     def RemoveKey(self):
         if(len(self.api_keys_list) > 1):
