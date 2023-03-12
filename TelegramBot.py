@@ -36,12 +36,12 @@ class TelegramBot:
         executor.start_polling(self.dp)
 
     # Функция регистрации пользователя в бд
-    def RegisterUser(self, username, userid, firstname, lastname, banned=0, is_spam=1, balance=10, lang='ru', tokens=100):
+    def RegisterUser(self, username, userid, firstname, lastname, banned=0, is_spam=1, balance=10, lang='ru', tokens=100, ratings=0):
         try:
             userdata = self.database.query(f"SELECT * FROM users WHERE userid='{userid}'")
             if len(userdata) <= 0:
                 self.database.query(f"INSERT INTO users (username, userid, firstname, lastname, banned, is_spam) VALUES('{username}', '{userid}', '{firstname}', '{lastname}', {banned}, {is_spam})", commit=True)
-                self.database.query(f"INSERT INTO settings (userid, balance, lang, tokens) VALUES('{userid}', {balance}, '{lang}', {tokens})", commit=True)
+                self.database.query(f"INSERT INTO settings (userid, balance, lang, tokens, ratings) VALUES('{userid}', {balance}, '{lang}', {tokens}, {ratings})", commit=True)
                 return True
             return False
         except:
@@ -104,7 +104,7 @@ class TelegramBot:
         lang = settings_user["lang"]
         tokens = settings_user["tokens"]
         ratings = settings_user ["ratings"]
-        text = f"\n\n\n<b>👤 Мой аккаунт</b>:\n\n<b>ID:</b> {user_id}\n<b>Имя:</b> <code>{message.from_user.username}</code>\n<b>Социальный статус:</b> <code>+{ratings}</code>\n\n<b> Мой кабинет:</b>\n<b>├ Партнёрский счёт:</b> <code>Не установлен</code><b>\n├ Осталось:</b> <code>{tokens}</code> токенов\n<b>└ Мой баланс:</b> <code>{balance}</code> рублей"
+        text = f"\n\n\n<b>👤 Мой аккаунт:</b>\n\n<b> ID:</b> {user_id}\n<b> Имя:</b> <code>{message.from_user.first_name}</code>\n<b> Рейтинг в чатах:</b> <code>+{ratings}</code>\n\n<b>🖥 Мой профиль:</b>\n<b>├ Партнерский счет:</b> <code>No</code><b>\n├ Осталось:</b> <code>{tokens}</code> токенов\n<b>└ Мой баланс:</b> <code>{balance}</code> RUB\n\n💳 <b>Продлить подписку:</b> /pay"
 
         # Отправляем сообщение с кнопками оплаты
         await self.bot.send_message(
@@ -122,10 +122,22 @@ class TelegramBot:
             settings_user = settings_user["result"]
         else:
             return
-        text = f"🆘 <b>Вам нужна помощь?</b>\n\nПожалуйста, обратите внимание, что в поддержке классифицированные специалисты. Мы постараемся помочь как можно быстрее, но ожидание может занять некоторое время.\n\n<b>График работы администраторов: 09:00-18:00 по московскому времени.</b>\n\nЧтобы связаться с тех. поддержкой для решения каких либо вопросов, отправтье боту сообщение «Помощь»."
-        await self.bot.send_message(chat_id=user_id,
-                                    text=text,
-                                    parse_mode='HTML')
+        text = f"🆘 <code>{message.from_user.first_name}</code>, <b>Вам нужна помощь?</b>\n\nПожалуйста, обратите внимание, что в поддержке классифицированные специалисты. Мы постараемся помочь как можно быстрее, но ожидание может занять некоторое время.\n\n<b>График работы администраторов: 09:00-18:00 по московскому времени.</b>\n\nЧтобы связаться с тех. поддержкой для решения каких либо вопросов, отправтье боту сообщение «Помощь»."
+        
+        # Создаем объекты кнопок оплаты
+        support_button = types.InlineKeyboardButton(text="🆘 Перейти в тех. поддержку", url="https://t.me/InfoGrom_Forum/108")
+
+        # Создаем объект клавиатуры с кнопками оплаты
+        payment_keyboard = types.InlineKeyboardMarkup(row_width=1)
+        payment_keyboard.add(support_button)
+
+        # Отправляем сообщение с кнопками оплаты
+        await self.bot.send_message(
+            chat_id=user_id,
+            text=text,
+            parse_mode='HTML',
+            reply_markup=payment_keyboard
+        ) 
         
     # Функция ответа на команду /pay
     async def pay_command_handler(self, message: types.Message):
@@ -137,7 +149,7 @@ class TelegramBot:
         else:
             return
 
-        text = f"<b>💳 Управление подпиской:</b>\n\nПодписка — открывает доступ к запросам, увеличивает лимит токенов. Выберите тариф и после оплаты, перейдите по кнопке 'Перейти в тех. поддержку', напишите ваше имя и сумму, чтобы Создатель обновил Ваш личный кабинет:"
+        text = f"<b>💳 Управление подпиской бота:</b>\n\n✅ Подписка — открывает доступ к запросам на сервера «ChatGPT», тем самым увеличивает лимит токенов. Выберите тариф и после оплаты, перейдите по кнопке «🆘 Перейти в тех. поддержку», напишите Ваше Имя, или @username, сумму и количество токенов, чтобы Администратор обновил Ваш личный кабинет. Если у Вас какие-то вопросы, напишите мне @infoGroms и мы что-нибудь придумаем:"
 
         # Создаем объекты кнопок оплаты
         payment_button_1 = types.InlineKeyboardButton(text="500 токенов за 59 руб.", url="https://oplata.qiwi.com/form?invoiceUid=bbca21dd-ae7b-4acf-ad33-14b127906808&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
@@ -179,8 +191,41 @@ class TelegramBot:
         if not self.CheckUser(userid):
             self.RegisterUser(username, userid, firstname, lastname)
 
+        user_id = message.from_user.id
+        settings_user = self.GetUserSettings(user_id)
+
+        if (settings_user["error"]):
+            settings_user = settings_user["result"]
+        else:
+            return
+
+        ratings = settings_user ["ratings"]
+
         me = await self.bot.get_me()
 
+        # Ответное сообщение пользователю на реакцию:
+        if rq in ['Спасибо', '+']:
+            if message.reply_to_message and message.reply_to_message.from_user.username:
+                # получаем имя пользователя, отправившего благодарность
+                #recipient_username = message.reply_to_message.from_user.username
+                # получаем id пользователя, которому отправлена благодарность
+                recipient_userid = message.reply_to_message.from_user.id
+                # формируем текст сообщения с упоминанием пользователя
+                text = f"👍 <code>{username}</code> <b>выразил(а) Вам благодарность! <code>({ratings})</code></b>"
+                # отправляем сообщение с упоминанием пользователя и парсингом HTML
+                await self.bot.send_message(
+                    chat_id=message.chat.id,
+                    text=text,
+                    reply_to_message_id=message.reply_to_message.message_id,
+                    parse_mode='HTML'
+                )
+
+                # увеличиваем количество ratings в таблице settings базы данных на 1
+                self.database.query(f"UPDATE settings SET ratings=ratings+1 WHERE userid={recipient_userid}", commit=True)
+                # выводим сообщение об успешной отправке
+                print(f"({username} -> bot): {rq}\n(bot -> {username}): {username} выразил(а) Вам благодарность!")
+                return
+            
         # Ответное сообщение пользователю на Ссылку:
         if message.text == 'Ссылка':
             keyboard_markup = types.InlineKeyboardMarkup(row_width=2)
@@ -207,37 +252,6 @@ class TelegramBot:
                 reply_markup=keyboard_markup
             )
 
-        # Ответное сообщение пользователю на реакцию:
-        if rq in [
-            'Спасибо!', 'Благодарю!', 'Благодарствую!', 'Мерси!',
-            'Большое спасибо!', 'Спасибо большое', 'Спасибо', 'Благодарю',
-            'Благодарствую', 'Мерси', 'Большое спасибо', 'Спасибо большое',
-            'Спасибо большое,', 'Спасибо,', 'Благодарю,', 'Благодарствую,',
-            'Мерси,', 'Большое спасибо,', 'Спасибо за ответ', 'Спасибо за ответ!',
-            'Спасибо за информацию!', 'Спасибо за информацию.', '+', 'Ок, спасибо)',
-            'Ок спасибо', 'Ок, срасибо!', 'Ок', 'Спасибо)', 'Благодарю)'
-        ]:
-            if message.reply_to_message and message.reply_to_message.from_user.username:
-                # получаем имя пользователя, отправившего благодарность
-                #recipient_username = message.reply_to_message.from_user.username
-                # получаем id пользователя, которому отправлена благодарность
-                recipient_userid = message.reply_to_message.from_user.id
-                # формируем текст сообщения с упоминанием пользователя
-                text = f"👍 <code>{username}</code> <b>выразил(а) Вам благодарность!</b>"
-                # отправляем сообщение с упоминанием пользователя и парсингом HTML
-                await self.bot.send_message(
-                    chat_id=message.chat.id,
-                    text=text,
-                    reply_to_message_id=message.reply_to_message.message_id,
-                    parse_mode='HTML'
-                )
-
-                # увеличиваем количество ratings в таблице settings базы данных на 1
-                self.database.query(f"UPDATE settings SET ratings=ratings+1 WHERE userid={recipient_userid}", commit=True)
-                # выводим сообщение об успешной отправке
-                print(f"({username} -> bot): {rq}\n(bot -> {username}): {username} выразил(а) Вам благодарность!")
-                return
-
         # С запросом ключевого слова "Иванов":
         if self.name_bot_command in rq:
             if self.CheckTokens(userid, rq):
@@ -247,16 +261,15 @@ class TelegramBot:
                                             parse_mode='HTML')
                 # Анимация "Печатает":
                 await self.bot.send_chat_action(chat_id=message.chat.id, action='typing')
-                generated_text = self.chatgpt.getAnswer(message=rq.replace(self.name_bot_command, ''), lang="ru", max_tokens=1000, temperature=0.7)
+                generated_text = self.chatgpt.getAnswer(message=rq.replace(self.name_bot_command, ''), lang="ru", max_tokens=1000, temperature=0.7, top_p=1, frequency_penalty=0, presence_penalty=0, engine_model="text-davinci-003")
                 await self.bot.edit_message_text(chat_id=message.chat.id,
                                                 text=generated_text["message"],
-                                                message_id=message_id+1)
+                                                message_id=message.message_id+1)
                 print(f"(@{username} -> bot): {rq}\n(bot -> @{username}): {generated_text['message']}")
             else:
-                await self.bot.send_message(chat_id=message.chat.id, text=f"⛔️ {username}, к сожалению я не могу продолжить с Вами диалог, у меня закончились токены... Пожалуйста перейдите в подписку с помощью команды /pay, чтобы увеличить лимит токенов!", reply_to_message_id=message_id)
-                print(f"(@{username} -> bot): {rq}\n(bot -> @{username}): ⛔️ {username}, к сожалению я не могу продолжить с Вами диалог, у меня закончились токены... Пожалуйста перейдите в подписку с помощью команды /pay, чтобы увеличить лимит токенов!")
-
-
+                await self.bot.send_message(chat_id=message.chat.id, text=f"🔴 Извините <code>{message.from_user.first_name}</code>, у Вас закончились токены... Пожалуйста перейдите в подписку с помощью команды /pay, чтобы увеличить лимит токенов!", reply_to_message_id=message.message_id)
+                print(f"(@{username} -> bot): {rq}\n(bot -> @{username}):🔴 Извините <code>{message.from_user.first_name}</code>, у Вас закончились токены... Пожалуйста перейдите в подписку с помощью команды /pay, чтобы увеличить лимит токенов!")
+ 
     def is_user_admin(self, user_id):
         try:
             userdata = self.database.query(f"SELECT * FROM users WHERE userid={user_id}")
