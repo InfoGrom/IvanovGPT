@@ -25,6 +25,7 @@ class TelegramBot:
         self.dp.message_handler(commands=["start"])(self.process_start_command)
         self.dp.message_handler(commands=["info"])(self.info_command_handler)
         self.dp.message_handler(commands=["help"])(self.help_command_handler)
+        self.dp.message_handler(commands=["about"])(self.about_command_handler)
         self.dp.message_handler(commands=["pay"])(self.pay_command_handler)
         self.dp.message_handler(commands=["admin"])(self.admin_command_handler)
         self.dp.message_handler(commands=["test"])(self.test_command_handler)
@@ -104,7 +105,7 @@ class TelegramBot:
         lang = settings_user["lang"]
         tokens = settings_user["tokens"]
         ratings = settings_user ["ratings"]
-        text = f"\n\n\n<b>👤 Мой аккаунт:</b>\n\n<b> ID:</b> {user_id}\n<b> Имя:</b> <code>{message.from_user.first_name}</code>\n<b> Рейтинг в чатах:</b> <code>+{ratings}</code>\n\n<b>🖥 Мой профиль:</b>\n<b>├ Партнерский счет:</b> <code>No</code><b>\n├ Осталось:</b> <code>{tokens}</code> токенов\n<b>└ Мой баланс:</b> <code>{balance}</code> RUB\n\n💳 <b>Продлить подписку:</b> /pay"
+        text = f"\n\n\n<b>👤 Мой аккаунт:</b>\n\n<b> ID:</b> {user_id}\n<b> Имя:</b> <code>{message.from_user.first_name}</code>\n<b> Рейтинг в чатах:</b> <code>+{ratings}</code>\n\n<b>🖥 Мой профиль:</b>\n<b>├ Партнерский счет:</b> <code>No</code><b>\n├ Топливо:</b> <code>{tokens}</code> токенов\n<b>└ Мой баланс:</b> <code>{balance}</code> RUB\n\n💳 <b>Продлить подписку:</b> /pay"
 
         # Отправляем сообщение с кнопками оплаты
         await self.bot.send_message(
@@ -137,6 +138,24 @@ class TelegramBot:
             text=text,
             parse_mode='HTML',
             reply_markup=payment_keyboard
+        )
+
+            # Функция ответа на команду /about
+    async def about_command_handler(self, message: types.Message):
+        user_id = message.from_user.id
+        settings_user = self.GetUserSettings(user_id)
+
+        if (settings_user["error"]):
+            settings_user = settings_user["result"]
+        else:
+            return
+        text = f"📝 Справка о топливе (токены):\n\n<b>🔸 Что такое токены?</b>\nКак и у всех людей, еда = это энергия и жизнь, так и топливо для работы нейросети. После каждого запроса количество токенов уменьшается.\n\n🔸 Как тратятся токены?\n- 1 токен ~ 1 символ на русском\n- 1 токен ~ 4 символа на английском\n\n🔶 Что делать, если закончился лимит токенов?\n- Вы можете пополнить баланс токенов выбрав тариф в разделе /pay - «Управление подпиской бота». Узнать остаток токенов можно в личном кабинете /info."
+
+        # Отправляем сообщение с кнопками оплаты
+        await self.bot.send_message(
+            chat_id=user_id,
+            text=text,
+            parse_mode='HTML',
         ) 
         
     # Функция ответа на команду /pay
@@ -267,8 +286,8 @@ class TelegramBot:
                                                 message_id=message.message_id+1)
                 print(f"(@{username} -> bot): {rq}\n(bot -> @{username}): {generated_text['message']}")
             else:
-                await self.bot.send_message(chat_id=message.chat.id, text=f"🔴 Извините <code>{message.from_user.first_name}</code>, бесплатный лимит запросов исчерпан... Вы потратили 100 демо - токенов. Чтобы увеличить лимит запросов, перейдите в бота и отправьте команду /pay", reply_to_message_id=message.message_id)
-                print(f"(@{username} -> bot): {rq}\n(bot -> @{username}):🔴 Извините <code>{message.from_user.first_name}</code>, бесплатный лимит запросов исчерпан... Вы потратили 100 демо - токенов. Чтобы увеличить лимит запросов, перейдите в бота и отправьте команду /pay")
+                await self.bot.send_message(chat_id=message.chat.id, text=f"🔴 Извините <code>{message.from_user.first_name}</code>, топливо нейросети законилось... Вы исчерпали лимит токенов. Чтобы увеличить лимит запросов, перейдите в бота и отправьте команду /pay", reply_to_message_id=message.message_id)
+                print(f"(@{username} -> bot): {rq}\n(bot -> @{username}):🔴 Извините <code>{message.from_user.first_name}</code>, топливо нейросети законилось... Вы исчерпали лимит токенов. Чтобы увеличить лимит запросов, перейдите в бота и отправьте команду /pay")
  
     def is_user_admin(self, user_id):
         try:
