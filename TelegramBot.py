@@ -171,10 +171,10 @@ class TelegramBot:
         text = f"<b>💳 Управление подпиской:</b>\n\n✅ <b>Подписка</b> — открывает доступ к запросам на сервера «ChatGPT», тем самым увеличивает лимит токенов. Выберите тариф и после оплаты, перейдите по кнопке «🆘 Перейти в тех. поддержку», напишите Ваше Имя, или @username, сумму и количество токенов, чтобы Администратор обновил Ваш личный кабинет. Если у Вас какие-то вопросы, напишите мне @IvanovGPT и мы что-нибудь придумаем:"
 
         # Создаем объекты кнопок оплаты
-        payment_button_1 = types.InlineKeyboardButton(text="500 токенов за 59 руб.", url="https://oplata.qiwi.com/form?invoiceUid=bbca21dd-ae7b-4acf-ad33-14b127906808&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
-        payment_button_2 = types.InlineKeyboardButton(text="1000 токенов за 99 руб.", url="https://oplata.qiwi.com/form?invoiceUid=9087c35a-17a1-482f-91d7-294d59effe0c&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
-        payment_button_3 = types.InlineKeyboardButton(text="2000 токенов за 199 руб.", url="https://oplata.qiwi.com/form?invoiceUid=fa13e3ff-dbab-4b3b-8d24-7ed6ebe7847e&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
-        payment_button_4 = types.InlineKeyboardButton(text="5000 токенов за 499 руб.", url="https://oplata.qiwi.com/form?invoiceUid=e592f04a-a2ef-4a27-be59-9594d1159ac9&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
+        payment_button_1 = types.InlineKeyboardButton(text="🔸Купить 500 токенов", url="https://oplata.qiwi.com/form?invoiceUid=bbca21dd-ae7b-4acf-ad33-14b127906808&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
+        payment_button_2 = types.InlineKeyboardButton(text="🔸Купить 1000 токенов", url="https://oplata.qiwi.com/form?invoiceUid=9087c35a-17a1-482f-91d7-294d59effe0c&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
+        payment_button_3 = types.InlineKeyboardButton(text="🔶Купить 2000 токенов", url="https://oplata.qiwi.com/form?invoiceUid=fa13e3ff-dbab-4b3b-8d24-7ed6ebe7847e&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
+        payment_button_4 = types.InlineKeyboardButton(text="🔶Купить 5000 токенов", url="https://oplata.qiwi.com/form?invoiceUid=e592f04a-a2ef-4a27-be59-9594d1159ac9&successUrl=https%3A%2F%2Ft.me%2FIvanovGPTbot")
         support_button = types.InlineKeyboardButton(text="🆘 Перейти в тех. поддержку", url="https://t.me/InfoGrom_Forum/108")
 
 
@@ -280,14 +280,17 @@ class TelegramBot:
                                             parse_mode='HTML')
                 # Анимация "Печатает":
                 await self.bot.send_chat_action(chat_id=message.chat.id, action='typing')
-                generated_text = self.chatgpt.getAnswer(message=rq.replace(self.name_bot_command, ''), lang="ru", max_tokens=1000, temperature=0.9, top_p=1, frequency_penalty=0.5, presence_penalty=0.5, engine_model="text-davinci-003")
+                if rq.startswith(self.name_bot_command):
+                    rq = rq[len(self.name_bot_command):].strip()
+
+                generated_text = self.chatgpt.getAnswer(message=rq, lang="ru", max_tokens=1000, temperature=0.9, top_p=1, frequency_penalty=0.5, presence_penalty=0.5, engine_model="text-davinci-003")
                 await self.bot.edit_message_text(chat_id=message.chat.id,
                                                 text=generated_text["message"],
                                                 message_id=message.message_id+1)
                 print(f"(@{username} -> bot): {rq}\n(bot -> @{username}): {generated_text['message']}")
             else:
-                await self.bot.send_message(chat_id=message.chat.id, text=f"🔴 Извините <code>{message.from_user.first_name}</code>, топливо нейросети законилось... Вы исчерпали лимит токенов. Чтобы увеличить лимит запросов, перейдите в бота и отправьте команду /pay", reply_to_message_id=message.message_id)
-                print(f"(@{username} -> bot): {rq}\n(bot -> @{username}):🔴 Извините <code>{message.from_user.first_name}</code>, топливо нейросети законилось... Вы исчерпали лимит токенов. Чтобы увеличить лимит запросов, перейдите в бота и отправьте команду /pay")
+                await self.bot.send_message(chat_id=message.chat.id, text=f"🔴 Извините {message.from_user.first_name}, топливо нейросети законилось... Вы исчерпали лимит токенов. Чтобы увеличить лимит запросов, перейдите в бота и отправьте команду /pay", reply_to_message_id=message.message_id)
+                print(f"(@{username} -> bot): {rq}\n(bot -> @{username}):🔴 Извините {message.from_user.first_name}, топливо нейросети законилось... Вы исчерпали лимит токенов. Чтобы увеличить лимит запросов, перейдите в бота и отправьте команду /pay")
  
     def is_user_admin(self, user_id):
         try:
@@ -344,10 +347,10 @@ class TelegramBot:
             )
         return buttons
 
-    # Функция по выдаче денег
-    async def admin_give_money(self, call: types.CallbackQuery):
+    # Функция по выдаче токенов
+    async def admin_add_tokens(self, call: types.CallbackQuery):
         await self.bot.send_message(chat_id=call.message.chat.id, text="Введите формате: <code>/money @username количество</code>", parse_mode='HTML')
 
     # Функция по выдаче денег
-    async def admin_add_tokens(self, call: types.CallbackQuery):
+    async def admin_give_money(self, call: types.CallbackQuery):
         await self.bot.send_message(chat_id=call.message.chat.id, text="Введите формате: <code>/money @username количество</code>", parse_mode='HTML')
