@@ -8,7 +8,7 @@ class ChatGPT:
 
     # Список ключей Open AI
     api_keys_list = []
-    # Колчичество удалённых ключей
+    # Количество удаленных ключей
     removed_keys = 0
 
     # Функция инициализации объекта
@@ -18,40 +18,48 @@ class ChatGPT:
         self.api_keys_list = api_keys
         # Задаём текущий ключ Open AI
         openai.api_key = api_keys[0]
+        # Инициализируем переменную для хранения истории диалога
+        self.conversation_history = []
 
     # Функция отправки сообщения на сервера Open AI и получение ответа
     def getAnswer(self, message, lang="ru", max_tokens=1000, temperature=0.9, top_p=1, frequency_penalty=0.5, presence_penalty=0.5, engine_model="gpt-4"):
         i = 0
         errors = False
         message = mtranslate.translate(message, "en", "auto")
+
+        # Добавляем текущее сообщение в историю диалога
+        self.conversation_history.append(message)
+
         while(True):
             try:
                 # Считаем количество токенов
                 num_tokens = len(list(message))
-                # Если количество токенов превышает допустимое количество, то возращаем сообщение с ошибкой
+                # Если количество токенов превышает допустимое количество, то возвращаем сообщение с ошибкой
                 if(num_tokens > max_tokens):
                     errors = True
                     return {"message": mtranslate.translate("❌ You have exceeded the limit on the number of tokens. Please shorten your message.", lang, "auto"), "list_keys":self.api_keys_list, "attempts":i, "errors":errors, "num_tokens":num_tokens}
 
-
                 # Отправляем текст на серверы OpenAI и получаем ответ
                 response = openai.Completion.create(
                     engine=engine_model,
-                    prompt=message,
+                    prompt='\n'.join(self.conversation_history),
                     max_tokens=max_tokens,
                     top_p=top_p,
                     temperature=temperature,
                     frequency_penalty=frequency_penalty,
                     presence_penalty=presence_penalty
                 )
+
                 # Формируем результат ответа
                 result = response["choices"][0]["text"].strip()
-                
 
                 # Если бот вернул пустой ответ
                 if(not result):
                     errors = True
-                    result = "❌ Sorry, the bot didn't return the result.";
+                    result = "❌ Sorry, the bot didn't return the result."
+
+                # Добавляем ответ в историю диалога
+                self.conversation_history.append(result)
 
                 # Возращаем результат работы
                 return {"message": mtranslate.translate(result, lang, "auto"), "list_keys":self.api_keys_list, "attempts":i, "errors":errors, "num_tokens":num_tokens}
