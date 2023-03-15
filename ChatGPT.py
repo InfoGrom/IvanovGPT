@@ -20,18 +20,10 @@ class ChatGPT:
         openai.api_key = api_keys[0]
 
     # Функция отправки сообщения на сервера Open AI и получение ответа
-    # Описание параметров:
-    # message* - отправляемое сообщение
-    # lang - язык на котором нужно вернуть ответ (по умолчанию: "ru")
-    # max_tokens - максимальное количество токенов (по умолчанию: 1000)
-    # temperature - степень человечности ответа от 0 до 1 (по умолчанию: 0.7)
-    # engine_model - модель ChatGPT
-    def getAnswer(self, message, lang="auto", max_tokens=1000, temperature=0.9, top_p=1, frequency_penalty=0.5, presence_penalty=0.5, engine_model="text-davinci-003", prev_response=None):
+    def getAnswer(self, message, lang="ru", max_tokens=1000, temperature=0.9, top_p=1, frequency_penalty=0.5, presence_penalty=0.5, engine_model="gpt-4"):
         i = 0
         errors = False
-        message = mtranslate.translate(message, "auto")
-        if prev_response:
-            message = prev_response + "\n" + message  # добавляем предыдущий ответ бота в начало сообщения
+        message = mtranslate.translate(message, "en", "auto")
         while(True):
             try:
                 # Считаем количество токенов
@@ -62,7 +54,7 @@ class ChatGPT:
                     result = "❌ Sorry, the bot didn't return the result.";
 
                 # Возращаем результат работы
-                return {"message": mtranslate.translate(result, lang, "auto"), "list_keys":self.api_keys_list, "attempts":i, "errors":errors, "num_tokens":num_tokens, "prev_response": result}
+                return {"message": mtranslate.translate(result, lang, "auto"), "list_keys":self.api_keys_list, "attempts":i, "errors":errors, "num_tokens":num_tokens}
             except Exception as e:
                 # Если на аккаунте Chat GPT закончилась квота, меням ключ
                 if "You exceeded your current quota" in str(e):
@@ -70,6 +62,7 @@ class ChatGPT:
                         return {"message": mtranslate.translate("❌ I'm sorry, but an unexpected error has occurred", lang, "auto"), "list_keys":self.api_keys_list, "attempts":i, "errors":errors, "num_tokens":num_tokens}
                 else:
                     i += 1
+                    
 
     # Функция удаления ключа из списка
     def RemoveKey(self):
