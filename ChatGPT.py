@@ -1,10 +1,11 @@
 import openai
 import mtranslate
 import logging
+import os
 
 class ChatGPT:
     # Добавляем логирование в файл
-    logging.basicConfig(level=logging.INFO, filename="logs.log",filemode="w")
+    logging.basicConfig(level=logging.INFO, filename=os.path.abspath("logs.log"), filemode="w")
 
     # Список ключей Open AI
     api_keys_list = []
@@ -22,20 +23,20 @@ class ChatGPT:
         self.conversation_history = []
 
     # Функция отправки сообщения на сервера Open AI и получение ответа
-    def getAnswer(self, message, lang="ru", max_tokens=1000, temperature=0.9, top_p=1, frequency_penalty=0.5, presence_penalty=0.5, engine_model="gpt-4"):
+    def getAnswer(self, message, lang="auto", max_tokens=1000, temperature=0.8, top_p=1, frequency_penalty=0, presence_penalty=0, engine_model="gpt-3.5-turbo"):
         i = 0
         errors = False
-        message = mtranslate.translate(message, "en", "auto")
-
+        message = mtranslate.translate(message, "en","auto")
+        
         # Добавляем текущее сообщение в историю диалога
         self.conversation_history.append(message)
 
-        while(True):
+        while True:
             try:
                 # Считаем количество токенов
                 num_tokens = len(list(message))
                 # Если количество токенов превышает допустимое количество, то возвращаем сообщение с ошибкой
-                if(num_tokens > max_tokens):
+                if num_tokens > max_tokens:
                     errors = True
                     return {"message": mtranslate.translate("❌ You have exceeded the limit on the number of tokens. Please shorten your message.", lang, "auto"), "list_keys":self.api_keys_list, "attempts":i, "errors":errors, "num_tokens":num_tokens}
 
@@ -51,10 +52,10 @@ class ChatGPT:
                 )
 
                 # Формируем результат ответа
-                result = response["choices"][0]["text"].strip()
+                result = response.choices[0].text.strip()
 
                 # Если бот вернул пустой ответ
-                if(not result):
+                if not result:
                     errors = True
                     result = "❌ Sorry, the bot didn't return the result."
 
@@ -66,10 +67,10 @@ class ChatGPT:
             except Exception as e:
                 # Если на аккаунте Chat GPT закончилась квота, меням ключ
                 if "You exceeded your current quota" in str(e):
-                    if(self.RemoveKey()):
+                    if self.RemoveKey():
                         return {"message": mtranslate.translate("❌ I'm sorry, but an unexpected error has occurred", lang, "auto"), "list_keys":self.api_keys_list, "attempts":i, "errors":errors, "num_tokens":num_tokens}
                 else:
-                    i += 1
+                    i = i + 1
                     
 
     # Функция удаления ключа из списка
